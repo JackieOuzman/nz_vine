@@ -1,30 +1,134 @@
 ---
-title: "nz_vine_report"
+title: "Statistical Modelling Report"
 author: "Jackie"
 date: "5 October 2018"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+#Spatio-temporal variability in vine vigour and yield at the within-vineyard scale in a Marlborough Sauvignon Blanc vineyard.
+
+Major project aims: develop tools to improve current grape yield estimation (through the development of optical sensors).
+
+This part of the project is aimed at **understanding variation within a vineyard**. The knowedge of variation can assist in target sampling for yield estimation.
+
+The assumption is that different parts of the vineyard mature at different stages, therefore sampling efforts that understand these differences will be more informative in making yield estimations.
+
+The workflow for this assignmnet is:
+![](C:\Users\ouz001\DATASCHOOL\stats\work_flow.jpg)
+
+##Research questions:
+
+1. Are patterns of yield variation in the vineyard stable in time? 
+For example, are the high yielding vines always the high yielding vines.
+2. Are patterns in the following; 'componets of vine phenology', 'yield and yield compontnets', 'purning mass' stable in time?
+3. Can any pre harvets variable be used as a surrogate for variation in yield?
+
+##Statical framework
+
+*Outcome measure*
+* yield
+
+*Experimental factors*
+These factors are conditions of interset and genrally can be manipulated.
+* not really sure what to put here... we are not manipulting anyting*
+
+*Blocking factors*
+This includes the data structure and conditions that are not of primary interest.
+These conditions can impact upon the outcome measure and contribute as a sources of variation in the experiment.
+Clustering of experimental units.
+
+* prunning experiment
+* year
+
+## Import the data and review the structure
+
+Intall the packages and library.
+
+```{r libaries, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+library(dplyr)
+library(tidyverse)
+library(readxl)
+
+install.packages("emmeans")
+install.packages("lmerTest")
+library(emmeans)
+library(ggplot2)
+library(tidyverse)
+library(lmerTest)
+library(nlme)
+
 ```
 
-## R Markdown
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r read files, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+jackie <- read.csv("C:/Users/ouz001/DATASCHOOL/stats/subset_vine_prop.csv")
 
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
+Look at the data structure 
+assign the reference if needed
+make some data columns into factors
+change the order in which some factors are displayed
 
-You can also embed plots, for example:
+```{r data structure, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+str(jackie)
+# addapt this with(fran,table(Treat_dose, Treat_temp, Tank))
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+# addapt Hiz$treatment <- relevel(Hiz$treatment, ref = "Tap ")
+
+#Factor and yield and Vine
+jackie$year_fac<- factor(jackie$year)
+jackie$vine<- factor(jackie$vine)
+jackie$Row_.<- factor(jackie$Row_.)
+levels(jackie$Row_.)
+grape_yld$vine_size_2005 <- factor(grape_yld$vine_size_2005, c("XS", "S", "M", "L", "XL"))
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+##Visulaise the data 
+make comments
+
+```{r visulaise the data, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+
+
+#Vis
+ggplot(jackie, aes(year, yld_kg_per_vine, colour = Cropload, group = vine))+
+  geom_point()+
+  geom_line()
+
+ggplot(jackie, aes(year, yld_kg_per_vine, colour = Row_., group = vine))+
+  geom_point()+
+  geom_line()
+
+ggplot(jackie, aes(EM38 , yld_kg_per_vine, colour = Cropload))+
+  geom_point()+
+  geom_smooth(method=lm)+
+  facet_wrap(.~year_fac)
+
+ggplot(jackie, aes(Trunkcirc , yld_kg_per_vine, colour = Cropload))+
+  geom_point()+
+  geom_smooth(method=lm)+
+  facet_wrap(.~year_fac)
+
+```
+
+##Choose model
+
+```{r choose model, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+vine_lmer1 <- lmer(yld_kg_per_vine ~ Cropload * year_fac * Row_. +(1|vine), data=jackie)
+anova(vine_lmer1)
+vine_lmer2 <- lmer(yld_kg_per_vine ~ Cropload + year_fac + Row_. + (1|vine) , data=jackie)
+anova(vine_lmer2)
+
+plot(vine_lmer2)
+
+vine_lmer3 <- lmer(yld_kg_per_vine ~ Cropload* year_fac + Row_. + (1|vine) , data=jackie)
+anova(vine_lmer3)
+plot(vine_lmer3)
+#Crop load effect is different
+emmeans(vine_lmer3, pairwise~Cropload|year_fac)
+emmeans(vine_lmer3, pairwise~year_fac|Cropload)
+
+emmeans(vine_lmer3, consec ~year_fac|Cropload)
+```
