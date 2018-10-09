@@ -56,6 +56,13 @@ ggplot(yld_comp, aes(vine_size.2005, Total_number_bunches_per_vineHarvest, colou
   facet_wrap(.~ Cropload)
 
 
+
+
+
+
+
+
+
 #With the mean dipslayed as black + background changed
 # yld comp vs vine size
 
@@ -66,6 +73,7 @@ levels(yld_comp$Cropload)[levels(yld_comp$Cropload)=="4c"] <- "4 cane pruned"
 ggplot(yld_comp, aes(vine_size.2005, Calculated_yield_per_vine_kg_Harvest, colour = year_fac))+
   geom_point(alpha=0.6, position = position_jitter(width=0.2))+
   stat_summary(fun.y = mean, geom = "point", colour = "black")+
+  scale_colour_manual(values = c("red", "green", "blue"))+
   #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
   #geom = "errorbar", width = 0.2)+
   facet_wrap(.~ Cropload) +
@@ -80,12 +88,40 @@ ggplot(yld_comp, aes(vine_size.2005, Total_yield_per_vine_kg_Harvest, colour = y
   stat_summary(fun.y = mean, geom = "point", colour = "black")+
   #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
   #geom = "errorbar", width = 0.2)+
+  scale_colour_manual(values = c("red", "green", "blue"))+
   facet_wrap(.~ Cropload) +
   theme_bw()+
   labs(title ="Total yield vs vine size",
        x = "vine sieze",
        y = "Total yield per vine kg",
        colour = "year")
+
+ggplot(yld_comp, aes(year, Calculated_yield_per_vine_kg_Harvest, colour= year_fac))+
+  geom_boxplot(alpha = 0.5)+
+  geom_point()+
+  scale_colour_manual(values = c("red", "green", "blue"))+
+  facet_wrap(. ~ Cropload) +
+  theme_bw()+
+  scale_x_continuous(breaks=c(2005, 2006, 2007))+
+  labs(title ="Calculated yield vs year",
+       x = "year",
+       y = "Calculated yield per vine kg", 
+       colour = "year")
+
+
+ggplot(yld_comp, aes(year, Total_yield_per_vine_kg_Harvest, colour= year_fac))+
+  geom_boxplot(alpha = 0.5)+
+  geom_point()+
+  scale_colour_manual(values = c("red", "green", "blue"))+
+  facet_wrap(. ~ Cropload) +
+  theme_bw()+
+  scale_x_continuous(breaks=c(2005, 2006, 2007))+
+  labs(title ="Total yield vs year",
+       x = "year",
+       y = "Total yield per vine kg", 
+       colour = "year")
+
+
 
 
 
@@ -94,6 +130,7 @@ ggplot(yld_comp, aes(vine_size.2005, Total_number_bunches_per_vineHarvest, colou
   stat_summary(fun.y = mean, geom = "point", colour = "black")+
   #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
   #geom = "errorbar", width = 0.2)+
+  scale_colour_manual(values = c("red", "green", "blue"))+
   facet_wrap(.~ Cropload) +
   theme_bw()+
   labs(title = "Bunch number vs vine size",
@@ -106,6 +143,7 @@ ggplot(yld_comp, aes(vine_size.2005, bunch_weight_good_bunches_g_Harvest, colour
   stat_summary(fun.y = mean, geom = "point", colour = "black")+
   #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
   #geom = "errorbar", width = 0.2)+
+  scale_colour_manual(values = c("red", "green", "blue"))+
   facet_wrap(.~ Cropload) +
   theme_bw()+
   labs(title ="Bunch weight yield vs vine size",
@@ -115,11 +153,13 @@ ggplot(yld_comp, aes(vine_size.2005, bunch_weight_good_bunches_g_Harvest, colour
 
 str(yld_comp)
 
+
 ggplot(yld_comp, aes(vine_size.2005, Berry_weight_harvest, colour = year_fac))+
   geom_point(alpha=0.6, position = position_jitter(width=0.2))+
   stat_summary(fun.y = mean, geom = "point", colour = "black")+
   #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
   #geom = "errorbar", width = 0.2)+
+  scale_colour_manual(values = c("red", "green", "blue"))+
   facet_wrap(.~ Cropload) +
   theme_bw()+
   labs(title ="Berry weight",
@@ -159,19 +199,14 @@ ggplot(yld_comp, aes(year, Calculated_yield_per_vine_kg_Harvest, colour = vine_s
        y = "Calculated yield per vine kg",
        colour = "vine size")
 
-ggplot(yld_comp, aes(year, Calculated_yield_per_vine_kg_Harvest, group = year))+
-  geom_boxplot()+
-  facet_wrap(. ~ Cropload) +
-  theme_bw()+
-  scale_x_continuous(breaks=c(2005, 2006, 2007))+
-  labs(title ="Calculated yield vs year",
-       x = "year",
-       y = "Calculated yield per vine kg")
+
 
 #Try and get colours I want
 #Creates one colour for all my points
 mycolour <- "#4ABEFF"
 vine_size_Palette <- c("#000000", "#CC0000", "#66CC00", "#FFFF00", "#0000FF")
+#year_Palette 
+
 
 ggplot(yld_comp, aes(year, Calculated_yield_per_vine_kg_Harvest, group = Cropload, colour = Cropload))+
   geom_smooth(method = lm, se = FALSE)+
