@@ -2,38 +2,85 @@
 title: "Statistical Modelling Report"
 author: "Jackie"
 date: "5 October 2018"
-output: html_document
+output:
+  html_document: default
+  word_document: default
 ---
 
-#Spatio-temporal variability in vine vigour and yield at the within-vineyard scale in a Marlborough Sauvignon Blanc vineyard.
+#Within vineyard spatial and temporal variability of vine vigour and yield.
 
-Major project aims: develop tools to improve current grape yield estimation (through the development of optical sensors).
+Major project aims is to develop tools to improve current grape yield estimation (through the development of optical sensors).
 
-This part of the project is aimed at **understanding variation within a vineyard**. The knowedge of variation can assist in target sampling for yield estimation.
+This part of the project is aimed at **understanding variation within a vineyard**. The knowledge of variation can assist in target sampling for yield estimation.
 
 The assumption is that different parts of the vineyard mature at different stages, therefore sampling efforts that understand these differences will be more informative in making yield estimations.
 
-The workflow for this assignmnet is:
+###Background
+We inherited this dataset from New Zealand, which was set up to look at pruning treatment.
+
+
+The original experiment was set up to look at 48 vines, these vines were assigned to 2 pruning treatments and many measures were taken on these vines over 4 seasons, these include:
+
+* Vine phenology during the ripening period – at multiple time points during the season (% bud burst, %flowering)
+
+* Yield and yield components at harvest (such as bunch weight, berry mass)
+
+* Pruning mass (indicates vigour of vine over the season)
+
+Some information of the whole vineyard was also collected at one point in time;
+
+* elevation	
+
+* EM38 (measure of soil conductivity)
+
+* Trunk circumference (measured in 2004)
+
+* Crop circle (measure of vine vigour 2007)
+
+
+The vineyard and samples:
+
+
+![](C:\Users\ouz001\DATASCHOOL\stats\nz_vine\SquireD_samples.png){ width=50% }
+
+
+
+
+###The workflow for this assignment is:
+
 ![](C:\Users\ouz001\DATASCHOOL\stats\work_flow.jpg)
 
 ##Research questions:
 
 1. Are patterns of yield variation in the vineyard stable in time? 
 For example, are the high yielding vines always the high yielding vines.
-2. Are patterns in the following; 'componets of vine phenology', 'yield and yield compontnets', 'purning mass' stable in time?
-3. Can any pre harvets variable be used as a surrogate for variation in yield?
+2. Are yield and yield components related to underlying soil, elevation patterns?
+3. How do components of vine phenology, and pruning mass behave through time? 
+Are these vine components related to yield?
+4. Can any pre harvets measures be used as a surrogate for variation in yield?
 
-##Statical framework
+##Question 1 - Are patterns of yield variation in the vineyard stable in time?
+###statistical framework
 
 ***Outcome measure***
 
-* yield
+* yield per vine (calculated yield per vine and total yield per vine)
+* bunch per vine (total number of bunches per vine)
+* bunch mass (average bunch weight (good bunches)
+* berry mass (berry weight at harvest)
 
 ***Experimental factors***
 
-These factors are conditions of interset and genrally can be manipulated.
+These factors are conditions of interest and generally can be manipulated.
 
-* not really sure what to put here... we are not manipulting anyting
+*not really sure what to put here, we are not manipulating anything.*
+
+* pruning experiment (could also go to blocking)
+* year (could also go to blocking)
+* elevation
+* EM38
+* crop circle
+* trunk circumference
 
 ***Blocking factors***
 
@@ -41,12 +88,12 @@ This includes the data structure and conditions that are not of primary interest
 These conditions can impact upon the outcome measure and contribute as a sources of variation in the experiment.
 Clustering of experimental units.
 
-* prunning experiment
-* year
+* vine (random variable)
 
 ## Import the data and review the structure
 
-Intall the packages and library (I am having some trouble with loading emmeans - help with this)
+Install the packages and library 
+(I am having some trouble with loading emmeans - help with this)
 
 ```{r libaries, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
 #install.packages("emmeans")
@@ -65,85 +112,391 @@ library(lmerTest)
 library(nlme)
 
 
-
 ```
 
 
 ```{r read files, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
 
-jackie <- read.csv("C:/Users/ouz001/DATASCHOOL/stats/subset_vine_prop.csv")
+yld_comp <- read.csv("C:/Users/ouz001/DATASCHOOL/stats/nz_vine/yld_yld_comp_nz_grapes.csv")
+
 
 ```
 
-Look at the data structure 
-assign the reference if needed (here I have assigned 2005 as the reference)
-make some data columns into factors (year, vine, row and vine size)
-change the order in which some factors are displayed
+* Look at the data structure 
+* Assign the reference if needed (here I have assigned 2005 as the reference)
+* Make some data columns into factors (year, vine and vine size)
+
 
 ```{r data structure, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
-str(jackie)
-#Factor and yield and Vine
-jackie$year_fac<- factor(jackie$year)
-jackie$vine<- factor(jackie$vine)
-jackie$Row_.<- factor(jackie$Row_.)
-levels(jackie$Row_.)
-jackie$vine_size_2005 <- factor(jackie$vine_size_2005, c("XS", "S", "M", "L", "XL"))
 
-# can explore the data more using this function
-with(jackie,table(year_fac,Cropload, Row_.))
+yld_comp$year_fac<- factor(yld_comp$year)
+yld_comp$vine_fac<- factor(yld_comp$vine)
+yld_comp$year_fac <- relevel(yld_comp$year_fac, ref = "2005")
+glimpse(yld_comp)
+```
 
-#set one of the years as a reference
-jackie$year_fac <- relevel(jackie$year_fac, ref = "2005")
+
+##Visualise the data 
+
+* Create some object to make plots consistent.
+  For example labels and colour range
+* Change the order in which some factors are displayed
+
+```{r create some labels and colour scheme so data visulaisation is std}
+levels(yld_comp$Cropload)[levels(yld_comp$Cropload)=="2c"] <- "2 cane pruned"
+levels(yld_comp$Cropload)[levels(yld_comp$Cropload)=="4c"] <- "4 cane pruned"
+
+vine_size_Palette <- c("#000000", "#CC0000", "#66CC00", "#FFFF00", "#0000FF")
+
+yld_comp$vine_size.2005 <- factor(yld_comp$vine_size.2005, c("XS", "S", "M", "L", "XL"))
 
 ```
 
-##Visulaise the data 
-make comments
-
-```{r visulaise the data, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+**Yield components vs. year and pruning treatment**
 
 
-#Vis
-ggplot(jackie, aes(year, yld_kg_per_vine, colour = Cropload, group = vine))+
+```{r visulaise the data yld vs year, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+
+
+ggplot(yld_comp, aes(year, Calculated_yield_per_vine_kg_Harvest, colour= year_fac))+
+  geom_boxplot(alpha = 0.5)+
   geom_point()+
-  geom_line()
+  scale_colour_manual(values = c("red", "green", "blue"))+
+  facet_wrap(. ~ Cropload) +
+  theme_bw()+
+  scale_x_continuous(breaks=c(2005, 2006, 2007))+
+  labs(title ="Calculated yield vs. year",
+       x = "Year",
+       y = "Calculated yield per vine in kg", 
+       colour = "Year")
 
-ggplot(jackie, aes(year, yld_kg_per_vine, colour = Row_., group = vine))+
+ggplot(yld_comp, aes(year, Total_yield_per_vine_kg_Harvest, colour= year_fac))+
+  geom_boxplot(alpha = 0.5)+
   geom_point()+
-  geom_line()
-
-ggplot(jackie, aes(EM38 , yld_kg_per_vine, colour = Cropload))+
-  geom_point()+
-  geom_smooth(method=lm)+
-  facet_wrap(.~year_fac)
-
-ggplot(jackie, aes(Trunkcirc , yld_kg_per_vine, colour = Cropload))+
-  geom_point()+
-  geom_smooth(method=lm)+
-  facet_wrap(.~year_fac)
+  scale_colour_manual(values = c("red", "green", "blue"))+
+  facet_wrap(. ~ Cropload) +
+  theme_bw()+
+  scale_x_continuous(breaks=c(2005, 2006, 2007))+
+  labs(title ="Total yield vs. year",
+       x = "Year",
+       y = "Total yield per vine in kg", 
+       colour = "Year")
 
 ```
+
+Comments:
+
+* The two measure of yield are different, total yield has higher values
+* These set of graphs (with the boxplot overlaid) show the season differences 
+* Yield changes over the years, 2005 has the highest yield followed by 2007 then 2006
+* 2005 yield is most variable
+* 4 cane pruned vine have higher yield in all seasons and the yield is more variable than the 2 cane prune yield
+
+**Yield components vs. year and pruning treatment**
+
+```{r visulaise the data yld vs year looking for interaction, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+
+ggplot(yld_comp, aes(year, Calculated_yield_per_vine_kg_Harvest, group = Cropload, colour = Cropload))+
+  geom_smooth(method = lm, se = FALSE)+
+  geom_point()+
+  scale_colour_manual(values = c("red", "blue"))+ # this is using default colours
+  theme_bw()+
+  scale_x_continuous(breaks=c(2005, 2006, 2007))+
+  labs(title ="Calculated yield vs. year",
+       x = "Year",
+       y = "Calculated yield per vine in kg",
+       colour = "Crop load")
+
+ggplot(yld_comp, aes(year, Total_yield_per_vine_kg_Harvest, group = Cropload, colour = Cropload))+
+  geom_smooth(method = lm, se = FALSE)+
+  geom_point()+
+  #geom_point(colour = mycolour)+ #this is same colour for all my points
+  #scale_colour_manual(values = vine_size_Palette)+ #this is colours for my geom_point of geom_line from the defined above
+  scale_colour_manual(values = c("red", "blue"))+ # this is using default colours
+  theme_bw()+
+  scale_x_continuous(breaks=c(2005, 2006, 2007))+
+  labs(title ="Total yield vs. year",
+       x = "Year",
+       y = "Total yield per vine in kg",
+       colour = "Crop load")
+
+```
+
+Comments:
+
+* These set of graphs indicate that there is no interaction between season and pruning treatments
 
 ##Choose model
 
+Couple of choices here will depend on the data you have and the question you are asking;
+
+* Additive model 
+                lm(Response variable ~ Factor1 + Factor2, data = datafile)
+                this model assumes the factor1 difference are the same when factor2                      occurs. The model is constrained by factor2.
+* Factorial model
+                lm(Response variable ~ Factor1 * Factor2, data = datafile)
+                this model looks for interaction between factor 1 and 2.
+
+It is a possibility to run a factorial model just to see if an interaction exists, if no interaction you could modify the model.
+
+If you choose to incorporate blocking factors into model model will look like this:
+
+* linear model with blocking
+               lmer(Response variable ~ Factor1 + (1|blocking factor), data = datafile)
+               This does have a huge impact on the mean value but it will (if the        
+               blocking factor is a   block) influence the std error and therefore t 
+               value and p value the inference may be different.
+
+
+###Additive model
+
+`yld_yr_cropload_lm_add <- lm(Calculated yield ~ Cropload + year_fac, data = yld_comp)`
+
+```{r model additive, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+
+yld_yr_cropload_lm_add <- lm(Calculated_yield_per_vine_kg_Harvest ~ Cropload + year_fac, 
+                         data = yld_comp)
+
+anova(yld_yr_cropload_lm_add)
+lm_add_anova_output <- print(anova(yld_yr_cropload_lm_add))
+glimpse(lm_add_anova_output)
+
+lm_add_anova_output$`Sum Sq` <- round(lm_add_anova_output$`Sum Sq`, 2)
+lm_add_anova_output$`Mean Sq` <- round(lm_add_anova_output$`Mean Sq`, 2)
+lm_add_anova_output$`F value` <- round(lm_add_anova_output$`F value`, 2)                             
+
+#lm_add_anova_output$`Pr(>F)` <- round(lm_add_anova_output$`Pr(>F)`, 10) 
+emmeans(yld_yr_cropload_lm_add, pairwise ~ year_fac|Cropload)
+```
+
+```{r print anova for model additive1, echo=FALSE, warning= FALSE, error=FALSE,  message=FALSE}
+print(lm_add_anova_output)
+```
+
+```{r print emmeans for model additive2, echo=FALSE, warning= FALSE, error=FALSE,  message=FALSE}
+print(emmeans(yld_yr_cropload_lm_add, pairwise ~ year_fac|Cropload))
+
+```
+
+```{r print plot model additive, echo=FALSE, warning= FALSE, error=FALSE,  message=FALSE}
+
+plot(yld_yr_cropload_lm_add, which = 1:2)
+
+```
+
+Commets on model:
+* Additive model shows that the crop load and the year is significant.
+* Tukey post hoc test shows that within each crop load the season is signifitaly different. Seasons 2006 and 2007 are more simlar than 2005.
+* Residuals vs fitted show slight dip in the middle yld values.
+                       
+###Factorial model
+
+`yld_yr_cropload_lm_fact <- lm(Calculated yield ~ Cropload * year_fac, data = yld_comp)`
+
+```{r model factorial, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+yld_yr_cropload_lm_fac <- lm(Calculated_yield_per_vine_kg_Harvest ~ Cropload*year_fac, data = yld_comp)
+
+
+anova(yld_yr_cropload_lm_fac)
+lm_fact_anova_output <- print(anova(yld_yr_cropload_lm_fac))
+glimpse(lm_fact_anova_output)
+
+lm_fact_anova_output$`Sum Sq` <- round(lm_fact_anova_output$`Sum Sq`, 2)
+lm_fact_anova_output$`Mean Sq` <- round(lm_fact_anova_output$`Mean Sq`, 2)
+lm_fact_anova_output$`F value` <- round(lm_fact_anova_output$`F value`, 2)              
+
+emmeans(yld_yr_cropload_lm_fac, pairwise ~ year_fac|Cropload)
+```
+
+```{r print anova for model fact1, echo=FALSE, warning= FALSE, error=FALSE,  message=FALSE}
+print(lm_fact_anova_output)
+```
+
+```{r print emmeans for model factor2, echo=FALSE, warning= FALSE, error=FALSE,  message=FALSE}
+print(emmeans(yld_yr_cropload_lm_fac, pairwise ~ year_fac|Cropload))
+
+```
+
+```{r print plot model fact, echo=FALSE, warning= FALSE, error=FALSE,  message=FALSE}
+
+plot(yld_yr_cropload_lm_fac, which = 1:2)
+
+```
+
+Comments:
+
+* ANOVA indicates that crop load, year and intercation are all significant
+* Tukey analysis shows that only the 4 cane prune vines are signifcantly different between the years, again with 2006 and 2007 been similar seasons.
+* Residual vs Fitted plot show the model is a better fit.
+* Don't understand why the tukey for additive model show significance between the years for 2 cane and factorial doesnt?
+* Additive model has 139 df with se 0.2 and 0.199 (for 2006 - 2007 contrast)
+* Factorial model has 137 df with se 0.3 (for all contrasts)
+
+
+###Linear model with blocking
+
+
+`yld_yr_cropload_lm_block <- lmer(Calculated yield ~ Cropload * year_fac,  +(1|vine),data = yld_comp)`
+
+```{r model factorial with block, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+
+yld_yr_cropload_lmer_block <- lmer(Calculated_yield_per_vine_kg_Harvest ~ Cropload * year_fac +(1|vine), data=yld_comp)
+
+
+anova(yld_yr_cropload_lmer_block)
+yld_yr_cropload_lmer_block_output <- print(anova(yld_yr_cropload_lmer_block))
+glimpse(yld_yr_cropload_lmer_block)
+
+yld_yr_cropload_lmer_block_output$`Sum Sq` <- round(yld_yr_cropload_lmer_block_output$`Sum Sq`, 2)
+yld_yr_cropload_lmer_block_output$`Mean Sq` <- round(yld_yr_cropload_lmer_block_output$`Mean Sq`, 2)
+yld_yr_cropload_lmer_block_output$`F value` <- round(yld_yr_cropload_lmer_block_output$`F value`, 2)              
+
+emmeans(yld_yr_cropload_lmer_block, pairwise ~ year_fac|Cropload)
+```
+
+```{r print anova for model fact with block, echo=FALSE, warning= FALSE, error=FALSE,  message=FALSE}
+print(yld_yr_cropload_lmer_block_output)
+```
+
+```{r print emmeans for model factor with block, echo=FALSE, warning= FALSE, error=FALSE,  message=FALSE}
+print(emmeans(yld_yr_cropload_lmer_block, pairwise ~ year_fac|Cropload))
+
+```
+
+```{r print plot model fact with block, echo=FALSE, warning= FALSE, error=FALSE,  message=FALSE}
+
+plot(yld_yr_cropload_lmer_block)
+
+```
+
+Commets:
+
+
+*Yield components vs vine size* 
+*Yield vs vine size for different years*
+
+```{r visulaise the data yld vs vine size, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+
+
+#Vis
+
+ggplot(yld_comp, aes(vine_size.2005, Calculated_yield_per_vine_kg_Harvest, colour = year_fac))+
+  geom_point(alpha=0.6, position = position_jitter(width=0.2))+
+  geom_boxplot(alpha=0.6)+
+  #stat_summary(fun.y = mean, geom = "point", colour = "black")+
+  scale_colour_manual(values = c("red", "green", "blue"))+
+  #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
+  #geom = "errorbar", width = 0.2)+
+  facet_wrap(year_fac ~ Cropload) +
+  theme_bw()+
+  labs(title ="Calculated yield vs vine size",
+       x = "vine size",
+       y = "Calculated yield per vine kg",
+       colour = "year")
+
+ggplot(yld_comp, aes(vine_size.2005, Total_yield_per_vine_kg_Harvest , colour = year_fac))+
+  geom_point(alpha=0.6, position = position_jitter(width=0.2))+
+  geom_boxplot(alpha=0.6)+
+  scale_colour_manual(values = c("red", "green", "blue"))+
+  facet_wrap(year_fac ~ Cropload) +
+  theme_bw()+
+  labs(title ="Total yield vs vine size",
+       x = "vine size",
+       y = "Total yield per vine in kg",
+       colour = "Year")
+```
+
+Comments:
+
+* No patterns seen with vine size and yield
+* 4 cane pruned vine have higher yield in all seasons
+* Yield changes over the years, 2005 has the highest yield followed by 2007 then 2006
+
+
+
+
+
+
+
+
+
+
+
+```{r visulaise the data bunches per vine vs vine size, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+
+ggplot(yld_comp, aes(vine_size.2005, Total_number_bunches_per_vineHarvest, colour = year_fac))+
+  geom_point(alpha=0.6, position = position_jitter(width=0.1))+
+  stat_summary(fun.y = mean, geom = "point", colour = "black")+
+  #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
+  #geom = "errorbar", width = 0.2)+
+  scale_colour_manual(values = c("red", "green", "blue"))+
+  facet_wrap(.~ Cropload) +
+  theme_bw()+
+  labs(title = "Bunch number vs vine size",
+       x = "vine size",
+       y = "number of bunches",
+       colour = "year")
+```
+
+make comment on bunches per vine
+
+
+```{r visulaise the data bunch mass vs vine size, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+
+ggplot(yld_comp, aes(vine_size.2005, bunch_weight_good_bunches_g_Harvest, colour = year_fac))+
+  geom_point(alpha=0.6, position = position_jitter(width=0.2))+
+  stat_summary(fun.y = mean, geom = "point", colour = "black")+
+  #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
+  #geom = "errorbar", width = 0.2)+
+  scale_colour_manual(values = c("red", "green", "blue"))+
+  facet_wrap(.~ Cropload) +
+  theme_bw()+
+  labs(title ="Bunch weight yield vs vine size",
+       x = "vine size",
+       y = "Bunch weight (grams)",
+       colour = "year")
+```
+
+make comment on bunch weight
+
+```{r visulaise the data berry weight vs vine size, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+ggplot(yld_comp, aes(vine_size.2005, Berry_weight_harvest, colour = year_fac))+
+  geom_point(alpha=0.6, position = position_jitter(width=0.2))+
+  stat_summary(fun.y = mean, geom = "point", colour = "black")+
+  #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
+  #geom = "errorbar", width = 0.2)+
+  scale_colour_manual(values = c("red", "green", "blue"))+
+  facet_wrap(.~ Cropload) +
+  theme_bw()+
+  labs(title ="Berry weight",
+       x = "vine size",
+       y = "berry weight at harvest",
+       colour = "year")
+
+```
+
+make comment on berry weight
+
+
+
 ```{r choose model, echo=FALSE, warning= FALSE, error=FALSE, message=FALSE}
-vine_lmer1 <- lmer(yld_kg_per_vine ~ Cropload * year_fac * Row_. +(1|vine), data=jackie)
-anova(vine_lmer1)
-anova_output_vine_lmer1 <- print(anova(vine_lmer1))
+#vine_lmer1 <- lmer(yld_kg_per_vine ~ Cropload * year_fac * Row_. +(1|vine), data=jackie)
+#anova(vine_lmer1)
+#anova_output_vine_lmer1 <- print(anova(vine_lmer1))
 
-vine_lmer2 <- lmer(yld_kg_per_vine ~ Cropload + year_fac + Row_. + (1|vine) , data=jackie)
-anova(vine_lmer2)
+#vine_lmer2 <- lmer(yld_kg_per_vine ~ Cropload + year_fac + Row_. + (1|vine) , data=jackie)
+#anova(vine_lmer2)
 
-plot(vine_lmer2)
+#plot(vine_lmer2)
 
-vine_lmer3 <- lmer(yld_kg_per_vine ~ Cropload* year_fac + Row_. + (1|vine) , data=jackie)
-anova(vine_lmer3)
-plot(vine_lmer3)
+#vine_lmer3 <- lmer(yld_kg_per_vine ~ Cropload* year_fac + Row_. + (1|vine) , data=jackie)
+#anova(vine_lmer3)
+#plot(vine_lmer3)
 #Crop load effect is different
-emmeans(vine_lmer3, pairwise~Cropload|year_fac)
-emmeans(vine_lmer3, pairwise~year_fac|Cropload)
+#emmeans(vine_lmer3, pairwise~Cropload|year_fac)
+#emmeans(vine_lmer3, pairwise~year_fac|Cropload)
 
-emmeans(vine_lmer3, consec ~year_fac|Cropload)
+#emmeans(vine_lmer3, consec ~year_fac|Cropload)
 ```
 
 
