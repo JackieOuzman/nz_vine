@@ -159,24 +159,24 @@ yld_comp$vine_size.2005 <- factor(yld_comp$vine_size.2005, c("XS", "S", "M", "L"
 
 
 ggplot(yld_comp, aes(year, Calculated_yield_per_vine_kg_Harvest, colour= year_fac))+
-  geom_boxplot(alpha = 0.5)+
-  geom_point()+
-  scale_colour_manual(values = c("red", "green", "blue"))+
+  geom_boxplot()+
+  geom_point(alpha=0.2, size=5)+
+  scale_colour_manual(values = c("red", "green", "blue", "dark green"))+
   facet_wrap(. ~ Cropload) +
   theme_bw()+
-  scale_x_continuous(breaks=c(2005, 2006, 2007))+
+  scale_x_continuous(breaks=c(2005, 2006, 2007, 2008))+
   labs(title ="Calculated yield vs. year",
        x = "Year",
        y = "Calculated yield per vine in kg", 
        colour = "Year")
 
 ggplot(yld_comp, aes(year, Total_yield_per_vine_kg_Harvest, colour= year_fac))+
-  geom_boxplot(alpha = 0.5)+
-  geom_point()+
-  scale_colour_manual(values = c("red", "green", "blue"))+
+  geom_boxplot()+
+  geom_point(alpha=0.2, size=5)+
+  scale_colour_manual(values = c("red", "green", "blue", "dark green"))+
   facet_wrap(. ~ Cropload) +
   theme_bw()+
-  scale_x_continuous(breaks=c(2005, 2006, 2007))+
+  scale_x_continuous(breaks=c(2005, 2006, 2007, 2008))+
   labs(title ="Total yield vs. year",
        x = "Year",
        y = "Total yield per vine in kg", 
@@ -188,8 +188,8 @@ Comments:
 
 * The two measure of yield are different, total yield has higher values
 * These set of graphs (with the boxplot overlaid) show the season differences 
-* Yield changes over the years, 2005 has the highest yield followed by 2007 then 2006
-* 2005 yield is most variable
+* Yield changes over the years, 2005 and 2008 has the highest yield followed by 2007 then 2006
+* 2005 yield is most variable, generally higher yielding season or treatments show greater variability.
 * 4 cane pruned vine have higher yield in all seasons and the yield is more variable than the 2 cane prune yield
 
 **Yield components vs. year and pruning treatment**
@@ -201,7 +201,7 @@ ggplot(yld_comp, aes(year, Calculated_yield_per_vine_kg_Harvest, group = Croploa
   geom_point()+
   scale_colour_manual(values = c("red", "blue"))+ # this is using default colours
   theme_bw()+
-  scale_x_continuous(breaks=c(2005, 2006, 2007))+
+  scale_x_continuous(breaks=c(2005, 2006, 2007, 2008))+
   labs(title ="Calculated yield vs. year",
        x = "Year",
        y = "Calculated yield per vine in kg",
@@ -214,7 +214,7 @@ ggplot(yld_comp, aes(year, Total_yield_per_vine_kg_Harvest, group = Cropload, co
   #scale_colour_manual(values = vine_size_Palette)+ #this is colours for my geom_point of geom_line from the defined above
   scale_colour_manual(values = c("red", "blue"))+ # this is using default colours
   theme_bw()+
-  scale_x_continuous(breaks=c(2005, 2006, 2007))+
+  scale_x_continuous(breaks=c(2005, 2006, 2007, 2008))+
   labs(title ="Total yield vs. year",
        x = "Year",
        y = "Total yield per vine in kg",
@@ -224,7 +224,7 @@ ggplot(yld_comp, aes(year, Total_yield_per_vine_kg_Harvest, group = Cropload, co
 
 Comments:
 
-* These set of graphs indicate that there is no interaction between season and pruning treatments
+* These set of graphs suggest that there is little interaction between season and pruning treatments
 
 ##Choose model
 
@@ -243,9 +243,7 @@ If you choose to incorporate blocking factors into model model will look like th
 
 * linear model with blocking
                lmer(Response variable ~ Factor1 + (1|blocking factor), data = datafile)
-               This does have a huge impact on the mean value but it will (if the        
-               blocking factor is a   block) influence the std error and therefore t 
-               value and p value the inference may be different.
+               This does have a huge impact on the mean value but it will (if the             blocking factor is a   block) influence the std error and therefore t value and p value the inference may be different.
 
 
 ###Additive model
@@ -284,14 +282,16 @@ plot(yld_yr_cropload_lm_add, which = 1:2)
 
 ```
 
-Commets on model:
+Comments on model:
+
 * Additive model shows that the crop load and the year is significant.
-* Tukey post hoc test shows that within each crop load the season is signifitaly different. Seasons 2006 and 2007 are more simlar than 2005.
+* Tukey post hoc test shows that within each crop load the season are signifitaly different. Seasons 2005 and 2008 are more simlar than the other years.
 * Residuals vs fitted show slight dip in the middle yld values.
                        
 ###Factorial model
 
 `yld_yr_cropload_lm_fact <- lm(Calculated yield ~ Cropload * year_fac, data = yld_comp)`
+
 
 ```{r model factorial, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
 yld_yr_cropload_lm_fac <- lm(Calculated_yield_per_vine_kg_Harvest ~ Cropload*year_fac, data = yld_comp)
@@ -326,17 +326,18 @@ plot(yld_yr_cropload_lm_fac, which = 1:2)
 Comments:
 
 * ANOVA indicates that crop load, year and intercation are all significant
-* Tukey analysis shows that only the 4 cane prune vines are signifcantly different between the years, again with 2006 and 2007 been similar seasons.
+* Tukey analysis shows that only the 4 cane prune vines are signifcantly different between the seasons, again with 2005 and 2008 are similar seasons.
 * Residual vs Fitted plot show the model is a better fit.
-* Don't understand why the tukey for additive model show significance between the years for 2 cane and factorial doesnt?
-* Additive model has 139 df with se 0.2 and 0.199 (for 2006 - 2007 contrast)
-* Factorial model has 137 df with se 0.3 (for all contrasts)
+* Don't understand why the tukey for additive model show significance between the years for 2 cane and factorial does not (with the exception of 2006-2008)?
+* Additive model has 186 df with se 0.196 (for all contrasts)
+* Factorial model has 183 df with se 0.263 (for all contrasts)
 
 
-###Linear model with blocking
+###Factorial model with blocking
 
 
-`yld_yr_cropload_lm_block <- lmer(Calculated yield ~ Cropload * year_fac,  +(1|vine),data = yld_comp)`
+`yld_yr_cropload_lm_block <- lmer(Calculated yield ~ Cropload * year_fac  +(1|vine),data = yld_comp)`
+
 
 ```{r model factorial with block, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
 
@@ -371,6 +372,14 @@ plot(yld_yr_cropload_lmer_block)
 
 Commets:
 
+* ANOVA indicates that crop load, year and intercation are all significant
+* Tukey analysis shows that only the 4 cane prune vines are signifcantly different between the seasons, again with 2005 and 2008 are similar seasons.
+* Not sure whatthe residual vs Fitted plot is showing.
+* Don't understand why the tukey for additive model show significance between the years for 2 cane and factorial does not (with the exception of 2006-2008)?
+* Additive model has 186 df with se 0.196 (for all contrasts)
+* Factorial model has 183 df with se 0.263 (for all contrasts)
+* Factorial model with vine as block 137 df with 0.254 (for most contrast not 2 cane 2005-2006,07,08)
+
 
 *Yield components vs vine size* 
 *Yield vs vine size for different years*
@@ -381,10 +390,9 @@ Commets:
 #Vis
 
 ggplot(yld_comp, aes(vine_size.2005, Calculated_yield_per_vine_kg_Harvest, colour = year_fac))+
-  geom_point(alpha=0.6, position = position_jitter(width=0.2))+
-  geom_boxplot(alpha=0.6)+
-  #stat_summary(fun.y = mean, geom = "point", colour = "black")+
-  scale_colour_manual(values = c("red", "green", "blue"))+
+  geom_boxplot()+
+  geom_point(alpha=0.2, size=3)+
+  scale_colour_manual(values = c("red", "green", "blue", "dark green"))+
   #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
   #geom = "errorbar", width = 0.2)+
   facet_wrap(year_fac ~ Cropload) +
@@ -395,9 +403,9 @@ ggplot(yld_comp, aes(vine_size.2005, Calculated_yield_per_vine_kg_Harvest, colou
        colour = "year")
 
 ggplot(yld_comp, aes(vine_size.2005, Total_yield_per_vine_kg_Harvest , colour = year_fac))+
-  geom_point(alpha=0.6, position = position_jitter(width=0.2))+
-  geom_boxplot(alpha=0.6)+
-  scale_colour_manual(values = c("red", "green", "blue"))+
+  geom_boxplot()+
+  geom_point(alpha=0.2, size=3)+
+  scale_colour_manual(values = c("red", "green", "blue", "dark green"))+
   facet_wrap(year_fac ~ Cropload) +
   theme_bw()+
   labs(title ="Total yield vs vine size",
@@ -410,7 +418,7 @@ Comments:
 
 * No patterns seen with vine size and yield
 * 4 cane pruned vine have higher yield in all seasons
-* Yield changes over the years, 2005 has the highest yield followed by 2007 then 2006
+
 
 
 
@@ -425,12 +433,10 @@ Comments:
 ```{r visulaise the data bunches per vine vs vine size, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
 
 ggplot(yld_comp, aes(vine_size.2005, Total_number_bunches_per_vineHarvest, colour = year_fac))+
-  geom_point(alpha=0.6, position = position_jitter(width=0.1))+
-  stat_summary(fun.y = mean, geom = "point", colour = "black")+
-  #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
-  #geom = "errorbar", width = 0.2)+
-  scale_colour_manual(values = c("red", "green", "blue"))+
-  facet_wrap(.~ Cropload) +
+  geom_boxplot()+
+  geom_point(alpha=0.2, size=3)+
+  scale_colour_manual(values = c("red", "green", "blue", "dark green"))+
+  facet_wrap(year_fac~ Cropload) +
   theme_bw()+
   labs(title = "Bunch number vs vine size",
        x = "vine size",
@@ -439,17 +445,15 @@ ggplot(yld_comp, aes(vine_size.2005, Total_number_bunches_per_vineHarvest, colou
 ```
 
 make comment on bunches per vine
-
+I have added 2007 so re run and should be a plot!
 
 ```{r visulaise the data bunch mass vs vine size, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
 
 ggplot(yld_comp, aes(vine_size.2005, bunch_weight_good_bunches_g_Harvest, colour = year_fac))+
-  geom_point(alpha=0.6, position = position_jitter(width=0.2))+
-  stat_summary(fun.y = mean, geom = "point", colour = "black")+
-  #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
-  #geom = "errorbar", width = 0.2)+
-  scale_colour_manual(values = c("red", "green", "blue"))+
-  facet_wrap(.~ Cropload) +
+  geom_boxplot()+
+  geom_point(alpha=0.2, size=3)+
+  scale_colour_manual(values = c("red", "green", "blue", "dark green"))+
+  facet_wrap(year_fac~ Cropload) +
   theme_bw()+
   labs(title ="Bunch weight yield vs vine size",
        x = "vine size",
@@ -460,13 +464,12 @@ ggplot(yld_comp, aes(vine_size.2005, bunch_weight_good_bunches_g_Harvest, colour
 make comment on bunch weight
 
 ```{r visulaise the data berry weight vs vine size, echo=FALSE, warning= FALSE, error=FALSE, results='hide', message=FALSE}
+
 ggplot(yld_comp, aes(vine_size.2005, Berry_weight_harvest, colour = year_fac))+
-  geom_point(alpha=0.6, position = position_jitter(width=0.2))+
-  stat_summary(fun.y = mean, geom = "point", colour = "black")+
-  #stat_summary(fun.data = mean_sdl, fun.args = list(mult =1) , 
-  #geom = "errorbar", width = 0.2)+
-  scale_colour_manual(values = c("red", "green", "blue"))+
-  facet_wrap(.~ Cropload) +
+  geom_boxplot()+
+  geom_point(alpha=0.2, size=3)+
+  scale_colour_manual(values = c("red", "green", "blue", "dark green"))+
+  facet_wrap(year_fac~ Cropload) +
   theme_bw()+
   labs(title ="Berry weight",
        x = "vine size",
