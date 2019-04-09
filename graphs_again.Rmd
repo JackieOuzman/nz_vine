@@ -1,0 +1,1181 @@
+---
+title: "Robs_Report"
+author: "Jackie"
+date: "19 November 2018"
+output:
+  html_document: default
+  word_document: default
+---
+
+
+
+```{r load data and norm, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyverse)
+library(readxl)
+library(ggplot2)
+
+setwd("C:/Users/ouz001/DATASCHOOL/stats/nz_vine")
+cc_prune <- read.csv("crop_circle_vs_prune_wts.csv", header=TRUE)
+cc_prune = cc_prune %>% 
+  rename(prune = pruning_new_cane_wt_4vines)
+#glimpse(cc_prune)
+
+#subset by cropload
+subset_2c_p = filter(cc_prune, cc_prune$Cropload == "2c")
+subset_4c_p = filter(cc_prune, cc_prune$Cropload == "4c")
+#subset by year by crop load 2c
+subset_2005_p2c = filter(subset_2c_p, subset_2c_p$year == "2005")
+subset_2006_p2c = filter(subset_2c_p, subset_2c_p$year == "2006")
+subset_2007_p2c = filter(subset_2c_p, subset_2c_p$year == "2007")
+subset_2008_p2c = filter(subset_2c_p, subset_2c_p$year == "2008")
+
+#subset by year by crop load 4c
+subset_2005_p4c = filter(subset_4c_p, subset_4c_p$year == "2005")
+subset_2006_p4c = filter(subset_4c_p, subset_4c_p$year == "2006")
+subset_2007_p4c = filter(subset_4c_p, subset_4c_p$year == "2007")
+subset_2008_p4c = filter(subset_4c_p, subset_4c_p$year == "2008")
+
+#glimpse(subset_2005_p4c)
+
+#can I make new variable for each subset of data
+#2c first
+subset_2005_p2c <- subset_2005_p2c %>% 
+  mutate(z_score= (prune - mean(prune, na.rm = TRUE))/ sd(prune, na.rm = TRUE))
+subset_2006_p2c <- subset_2006_p2c %>% 
+  mutate(z_score= (prune - mean(prune, na.rm = TRUE))/ sd(prune, na.rm = TRUE))
+subset_2007_p2c <- subset_2007_p2c %>% 
+  mutate(z_score= (prune - mean(prune, na.rm = TRUE))/ sd(prune, na.rm = TRUE))
+subset_2008_p2c <- subset_2008_p2c %>% 
+  mutate(z_score= (prune - mean(prune, na.rm = TRUE))/ sd(prune, na.rm = TRUE))
+#4c first
+subset_2005_p4c <- subset_2005_p4c %>% 
+  mutate(z_score= (prune - mean(prune, na.rm = TRUE))/ sd(prune, na.rm = TRUE))
+subset_2006_p4c <- subset_2006_p4c %>% 
+  mutate(z_score= (prune - mean(prune, na.rm = TRUE))/ sd(prune, na.rm = TRUE))
+subset_2007_p4c <- subset_2007_p4c %>% 
+  mutate(z_score= (prune - mean(prune, na.rm = TRUE))/ sd(prune, na.rm = TRUE))
+subset_2008_p4c <- subset_2008_p4c %>% 
+  mutate(z_score= (prune - mean(prune, na.rm = TRUE))/ sd(prune, na.rm = TRUE))
+
+
+Yld_z_score_p <- dplyr::bind_rows(subset_2005_p2c, 
+                                  subset_2006_p2c, 
+                                  subset_2007_p2c, 
+                                  subset_2008_p2c,
+                                  subset_2005_p4c, 
+                                  subset_2006_p4c, 
+                                  subset_2007_p4c, 
+                                  subset_2008_p4c)
+
+levels(Yld_z_score_p$Cropload)[levels(Yld_z_score_p$Cropload)=="2c"] <- "2 cane pruned"
+levels(Yld_z_score_p$Cropload)[levels(Yld_z_score_p$Cropload)=="4c"] <- "4 cane pruned"
+Yld_z_score_p$year_as_factor<-factor(Yld_z_score_p$year, 
+                                   c("2005","2006","2007", "2008"))
+
+```
+
+
+#Fig 5 one line fitted to the whole data set
+
+
+
+```{r fig5 1 line, echo=FALSE, message=FALSE, warning=FALSE}
+
+Yld_z_score_p <- mutate(Yld_z_score_p,
+                       class = paste0(Cropload ," ", year_as_factor ))
+
+ggplot(Yld_z_score_p, aes(cropcircle, z_score, shape=class ))+
+  geom_smooth(method=lm, na.rm = TRUE, se=FALSE, colour="black",
+              aes(group = 1))+
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+    )+
+  scale_y_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = c(0.10,0.8))+
+  theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  theme(legend.title = element_blank())+
+  labs(x = "Crop Circle PCD",
+       y = "Pruning weights normalised")   
+
+
+
+##With extra stuff for Rob###
+
+
+ggplot(Yld_z_score_p, aes(cropcircle, z_score, shape=class ))+
+  geom_smooth(method=lm, na.rm = TRUE, se=FALSE, colour="black",
+              aes(group = 1))+
+  #annotate("text", x = 8.5, y = 2, label = "y = 10.00 + 0.69x", size=4)+
+  #annotate("text", x = 8.5, y = 1.8, label = "R2 = 0.60, P<0.0001", size=4)+
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+    )+
+  scale_y_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = "none")+
+  #theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  #theme(legend.title = element_blank())+
+  labs(x = "Crop Circle PCD",
+       y = "Pruning weights normalised")                               
+
+
+lm_eq_Yld_z_score_p <- lm(cropcircle ~ z_score, Yld_z_score_p, na.action = na.exclude)
+anova(lm_eq_Yld_z_score_p)
+summary(lm(cropcircle ~ z_score, Yld_z_score_p))$r.squared
+summary(lm(cropcircle ~ z_score, Yld_z_score_p))$coefficients
+
+ggsave(filename = "Pruning weights normalised.png", device = "png" ,dpi=600)
+
+write.csv(Yld_z_score_p, file = "yld_z_score_p.csv")
+ 
+```
+
+##From JMP Pruning weights
+
+###Pruning weights normalised = -8.642141 + 0.8638421*cropcircle
+
+###RSquare	0.596118
+
+RSquare Adj	0.593254
+
+Root Mean Square Error	0.626438
+
+Mean of Response	1.09e-16
+
+Observations (or Sum Wgts)	143
+
+Source	DF	Sum of Squares	Mean Square	F Ratio
+
+Model	1	81.66821	81.6682	208.1122
+
+Error	141	55.33179	0.3924		Prob > F
+
+C. Total	142	137.00000		<.0001	
+
+
+
+Term	Estimate	Std Error	t Ratio	Prob>|t|
+
+Intercept	 -8.642141	0.601349	 -14.37	<.0001
+
+cropcircle	0.8638421	0.059881	14.43	<.0001
+
+
+
+
+
+
+ 
+
+Fig 5 two line fitted to the data set 2 and 4 cane prune - no need to use
+
+```{r fig5 2 lines, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+ggplot(Yld_z_score_p, aes(cropcircle, z_score, shape=Cropload, group=Cropload ))+
+  geom_smooth(aes(linetype=Cropload), method=lm, na.rm = TRUE, se=FALSE, colour = "black")+
+  scale_linetype_manual(values=c("dotted", 
+                                 "solid"))+
+                          geom_point()+
+                          geom_point(aes(shape = Cropload), size = 3, fill= 'white')+
+                          scale_shape_manual(values = c("2 cane pruned" = 25,
+                                                        "4 cane pruned" =15))+
+                          theme_classic()+
+                          theme(axis.ticks.length=unit(-0.25, "cm"))+
+                          theme(legend.position = c(0.90,0.15))+
+                          theme(legend.background = element_rect(colour = 'black', fill = linetype = 'solid'))+
+                          theme(legend.title = element_blank())+
+                          labs(x = "Crop Circle PCD",
+                               y = "Pruning weights normalised") 
+
+
+```
+
+Fig 5 Mike version with non norm data fitted line per year
+I have used the data labelled pruning new cane wt 4 vines
+my scale is different to Mikes, his is 1.5 to 4.5 ? has he used scaled data?
+or a different data column?
+
+
+```{r fig5 Mike non norm fit lines per year, eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+ggplot(Yld_z_score_p, aes(cropcircle, prune, group=year_as_factor ))+
+  geom_smooth(aes(linetype=year_as_factor), method=lm, na.rm = TRUE, se=FALSE, colour = "black")+
+  scale_linetype_manual(values=c("dotdash", 
+                                 "dotted",
+                                 "longdash"))+
+  geom_point()+
+  geom_point(aes(shape = Cropload), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned" = 25,
+                                "4 cane pruned" =15))+
+  theme_classic()+
+  theme(legend.position = c(0.10,0.80))+
+  theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  theme(legend.title = element_blank())+
+  labs(x = "Crop Circle PCD",
+       y = "Pruning weights")
+
+```
+
+#Fig 5a of Mikes average of shoot mass (g)
+
+This data is from Mike Sigma plot email sent on the 19/11/2019
+
+```{r fig5a Mike shoot data, echo=FALSE, message=FALSE, warning=FALSE}
+shoot_mass <- read.csv("average_shoot_mass_2005_2008_from_Mike_sigma.csv", header=TRUE)
+#glimpse(shoot_mass)
+shoot_mass <- select(shoot_mass, "unquie_ID", 
+                "vine_size" = "vine_size.2005",
+                "Cropload" ="prune",
+                "year",
+                "cropcircle",
+                "shoot_mass" = "avereage.shoot.mass_g")
+shoot_mass$year_as_factor<-factor(shoot_mass$year, 
+                                   c("2005","2006","2007", "2008"))
+
+levels(shoot_mass$Cropload)[levels(shoot_mass$Cropload)=="2c"] <- "2 cane pruned"
+levels(shoot_mass$Cropload)[levels(shoot_mass$Cropload)=="4c"] <- "4 cane pruned"
+```
+
+It's a lot to have on one graph split between two.
+
+##2 cane shoot mass
+
+```{r fig5a 2 cane Mike shoot graph, echo=FALSE, message=FALSE, warning=FALSE}
+shoot_mass <- mutate(shoot_mass,
+                        class = paste0(Cropload ," ", year_as_factor ))
+
+shoot_mass_2cane <- subset(shoot_mass, Cropload == '2 cane pruned')
+shoot_mass_4cane <- subset(shoot_mass, Cropload == '4 cane pruned')
+
+lm_eq_shoot_mass_2cane <- lm(cropcircle ~ shoot_mass, shoot_mass_2cane)
+anova(lm_eq_shoot_mass_2cane)
+summary(lm(cropcircle ~ shoot_mass, shoot_mass_2cane))$r.squared #0.376534
+summary(lm(cropcircle ~ shoot_mass, shoot_mass_2cane))$coefficients
+
+
+ggplot(shoot_mass_2cane, aes(cropcircle, shoot_mass, shape = class)) +
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  geom_smooth(method=lm, na.rm = TRUE, se=FALSE, colour="black",
+              aes(group = 1))+
+  #annotate("text", x = 8.5, y = 140, label = "y = 7.23 + 0.031x", size=4)+
+  #annotate("text", x = 8.5, y = 135, label = "R2 = 0.38, P<0.0001", size=4)+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+  )+
+  scale_y_continuous(breaks= c(20, 40, 60, 80, 100, 120, 140, 160), limits = c(40,160),
+  sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = "none")+
+  #theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  #theme(legend.title = element_blank())+
+  #theme(panel.spacing = unit(5, "lines"))+
+  labs(x = "Crop Circle PCD",
+       y = "Average shoot mass (g)")
+
+ggsave(filename = "Average shoot mass_2cane.png", device = "png" ,dpi=600)
+write.csv(shoot_mass_2cane, file = "shoot_mass_2cane.csv")
+
+```
+
+##JMP output 2 cane  shoot mass
+
+###shoot_mass = -32.37691 + 12.290084*cropcircle
+	
+###RSquare	0.376534
+
+RSquare Adj	0.367628
+
+Root Mean Square Error	14.42411
+
+Mean of Response	90.57514
+
+Observations (or Sum Wgts)	72
+
+
+Source	DF	Sum of Squares	Mean Square	F Ratio
+Model	1	8795.662	8795.66	42.2756
+
+Error	70	14563.856	208.06		Prob > F
+
+C. Total	71	23359.518		<.0001	
+
+
+
+Term	Estimate	Std Error	t Ratio	Prob>|t|
+
+Intercept	 -32.37691	18.98621	 -1.71	0.0926
+
+cropcircle	12.290084	1.890209	6.50	<.0001
+
+
+
+
+ 
+ 
+##4 cane shoot mass
+ 
+```{r fig5a 4 cane Mike shoot graph, echo=FALSE, message=FALSE, warning=FALSE}
+#4 cane
+lm_eq_shoot_mass_4cane <- lm(cropcircle ~ shoot_mass, shoot_mass_4cane)
+anova(lm_eq_shoot_mass_4cane)
+summary(lm(cropcircle ~ shoot_mass, shoot_mass_4cane))$r.squared #0.295156
+summary(lm(cropcircle ~ shoot_mass, shoot_mass_4cane))$coefficients #7.80613646, 0.04167331
+
+ggplot(shoot_mass_4cane, aes(cropcircle, shoot_mass, shape = class)) +
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  geom_smooth(method=lm, na.rm = TRUE, se=FALSE, colour="black",
+              aes(group = 1))+
+  #annotate("text", x = 8.8, y = 140, label = "y = 7.81 + 0.04x", size=4)+
+  #annotate("text", x = 8.8, y = 135, label = "R2 = 0.30, P<0.0001", size=4)+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+  )+
+  scale_y_continuous(breaks= c(20, 40, 60, 80, 100, 120, 140, 160), limits = c(40,160),
+                     sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = "none")+
+  #theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  #theme(legend.title = element_blank())+
+  theme(panel.spacing = unit(5, "lines"))+
+  labs(x = "Crop Circle PCD",
+       y = "Average shoot mass (g)")
+
+ggsave(filename = "Average shoot mass_4cane.png", device = "png" ,dpi=600)
+write.csv(shoot_mass_4cane, file = "shoot_mass_4cane.csv")
+
+```
+
+
+##JMP output 4 cane shoot mass
+
+###shoot_mass = -18.10655 + 7.0826151*cropcircle
+	
+###RSquare	0.295156
+
+RSquare Adj	0.284941
+
+Root Mean Square Error	9.428466
+
+Mean of Response	52.75113
+
+Observations (or Sum Wgts)	71
+
+
+Source	DF	Sum of Squares	Mean Square	F Ratio
+
+Model	1	2568.5607	2568.56	28.8940
+
+Error	69	6133.8218	88.90		Prob > F
+
+C. Total	70	8702.3825		<.0001	
+
+
+Term	Estimate	Std Error	t Ratio	Prob>|t|
+
+Intercept	 -18.10655	13.22946	 -1.37	0.1755
+
+cropcircle	7.0826151	1.317619	5.38	<.0001
+
+
+
+
+
+
+##Fig 6 we are waiting for data to make this graph - Rob done this
+
+##Fig7 yield variation
+
+```{r bring in data again, echo=FALSE, message=FALSE, warning=FALSE}
+
+yld_1 <- read.csv("yld_yld_comp_nz_grapes.csv", header=TRUE)
+#glimpse(yld_1)
+#Remove the clms I dont need
+yld_2 <- select(yld_1, -"bunch_weight_good_bunches_g_Harvest", 
+                -"Total_yield_per_vine_kg_Harvest",
+                -"Berry_weight_harvest",
+                -"Total_number_bunches_per_vineHarvest")
+#glimpse(yld_2)
+
+```
+
+
+
+```{r shorten names, echo=FALSE, message=FALSE, warning=FALSE}
+yld = yld_2 %>% 
+  rename(cal_yld = Calculated_yield_per_vine_kg_Harvest)
+#glimpse(yld)
+
+```
+
+
+
+```{r subset data, echo=FALSE, message=FALSE}
+#subset by cropload
+subset_2c = filter(yld, yld$Cropload == "2c")
+subset_4c = filter(yld, yld$Cropload == "4c")
+#subset by year by crop load 2c
+subset_2005_y2c = filter(subset_2c, subset_2c$year == "2005")
+subset_2006_y2c = filter(subset_2c, subset_2c$year == "2006")
+subset_2007_y2c = filter(subset_2c, subset_2c$year == "2007")
+subset_2008_y2c = filter(subset_2c, subset_2c$year == "2008")
+
+#subset by year by crop load 4c
+subset_2005_y4c = filter(subset_4c, subset_4c$year == "2005")
+subset_2006_y4c = filter(subset_4c, subset_4c$year == "2006")
+subset_2007_y4c = filter(subset_4c, subset_4c$year == "2007")
+subset_2008_y4c = filter(subset_4c, subset_4c$year == "2008")
+```
+
+
+
+```{r z scores for yld, echo=FALSE, message=FALSE, warning=FALSE}
+#can I make new variable for each subset of data
+#2c first
+subset_2005_y2c <- subset_2005_y2c %>% 
+  mutate(z_score= (cal_yld - mean(cal_yld, na.rm = TRUE))/ sd(cal_yld, na.rm = TRUE))
+subset_2006_y2c <- subset_2006_y2c %>% 
+  mutate(z_score= (cal_yld - mean(cal_yld, na.rm = TRUE))/ sd(cal_yld, na.rm = TRUE))
+subset_2007_y2c <- subset_2007_y2c %>% 
+  mutate(z_score= (cal_yld - mean(cal_yld, na.rm = TRUE))/ sd(cal_yld, na.rm = TRUE))
+subset_2008_y2c <- subset_2008_y2c %>% 
+  mutate(z_score= (cal_yld - mean(cal_yld, na.rm = TRUE))/ sd(cal_yld, na.rm = TRUE))
+#4c first
+subset_2005_y4c <- subset_2005_y4c %>% 
+  mutate(z_score= (cal_yld - mean(cal_yld, na.rm = TRUE))/ sd(cal_yld, na.rm = TRUE))
+subset_2006_y4c <- subset_2006_y4c %>% 
+  mutate(z_score= (cal_yld - mean(cal_yld, na.rm = TRUE))/ sd(cal_yld, na.rm = TRUE))
+subset_2007_y4c <- subset_2007_y4c %>% 
+  mutate(z_score= (cal_yld - mean(cal_yld, na.rm = TRUE))/ sd(cal_yld, na.rm = TRUE))
+subset_2008_y4c <- subset_2008_y4c %>% 
+  mutate(z_score= (cal_yld - mean(cal_yld, na.rm = TRUE))/ sd(cal_yld, na.rm = TRUE))
+```
+
+
+
+```{r comnined data, echo=FALSE, message=FALSE, warning=FALSE}
+
+Yld_z_score <- dplyr::bind_rows(subset_2005_y2c, 
+                                subset_2006_y2c, 
+                                subset_2007_y2c, 
+                                subset_2008_y2c,
+                                subset_2005_y4c, 
+                                subset_2006_y4c, 
+                                subset_2007_y4c, 
+                                subset_2008_y4c)
+
+Yld_z_score$year_as_factor<-factor(Yld_z_score$year, 
+                                   c("2005","2006","2007", "2008"))
+
+levels(Yld_z_score$Cropload)[levels(Yld_z_score$Cropload)=="2c"] <- "2 cane pruned"
+levels(Yld_z_score$Cropload)[levels(Yld_z_score$Cropload)=="4c"] <- "4 cane pruned"                                
+```
+
+
+
+
+
+```{r yld norm plot, echo=FALSE, message=FALSE, warning=FALSE}
+Yld_z_score <- mutate(Yld_z_score,
+                        class = paste0(Cropload ," ", year_as_factor ))
+
+
+ggplot(Yld_z_score, aes(cropcircle, z_score, shape = class)) +
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+  )+
+  scale_y_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = "none")+
+  #theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  #theme(legend.title = element_blank())+
+  labs(x = "Crop Circle PCD",
+       y = "Normalised yield") 
+
+ggsave(filename = "Yld_z_score.png", device = "png" ,dpi=600)
+write.csv(Yld_z_score, file = "Yld_z_score.csv")
+
+```
+```{r yld norm plot with vine, echo=FALSE, message=FALSE, warning=FALSE}
+
+glimpse(Yld_z_score)
+Yld_z_score <- mutate(Yld_z_score,
+                        class = paste0(Cropload ," ", year_as_factor ))
+
+
+ggplot(Yld_z_score, aes(vine, z_score, shape = class)) +
+#ggplot(Yld_z_score, aes(vine, z_score, shape = class, colour = year_as_factor)) +
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+  )+
+  scale_y_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = "none")+
+  #facet_wrap(.~Cropload)+
+  #theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  #theme(legend.title = element_blank())+
+  labs(x = "vine number",
+       y = "Normalised yield") 
+
+ggsave(filename = "Yld_z_score_by_vine_number.png", device = "png" ,dpi=600)
+write.csv(Yld_z_score_by_vine_number, file = "Yld_z_score.csv")
+
+```
+
+#Figure 8 yld comp
+
+Norm the data start with berry weight
+```{r yld comp norm, echo=FALSE, message=FALSE, warning=FALSE}
+yld_comp <- read.csv("05to08_yld_comp.csv", header=TRUE)
+#glimpse(yld_comp)
+
+#subset by cropload
+subset_2c_yld_comp = filter(yld_comp, Cropload == "2c")
+subset_4c_yld_comp = filter(yld_comp, Cropload == "4c")
+#subset by year by crop load 2c
+subset_2c_yld_comp2005 = filter(subset_2c_yld_comp, year == "2005")
+subset_2c_yld_comp2006 = filter(subset_2c_yld_comp, year == "2006")
+subset_2c_yld_comp2007 = filter(subset_2c_yld_comp, year == "2007")
+subset_2c_yld_comp2008 = filter(subset_2c_yld_comp, year == "2008")
+
+#subset by year by crop load 4c
+subset_4c_yld_comp2005 = filter(subset_4c_yld_comp, year == "2005")
+subset_4c_yld_comp2006 = filter(subset_4c_yld_comp, year == "2006")
+subset_4c_yld_comp2007 = filter(subset_4c_yld_comp, year == "2007")
+subset_4c_yld_comp2008 = filter(subset_4c_yld_comp, year == "2008")
+
+```
+
+
+```{r berry wts norm, echo=FALSE, message=FALSE, warning=FALSE}
+#glimpse(subset_2c_yld_comp2005)
+#can I make new variable for each subset of data
+#2c first berry mass
+subset_2c_berry2005 <- subset_2c_yld_comp2005 %>% 
+  mutate(z_score= (Berry_mass - mean(Berry_mass, na.rm = TRUE))/ sd(Berry_mass, na.rm = TRUE))
+subset_2c_berry2006 <- subset_2c_yld_comp2006 %>% 
+  mutate(z_score= (Berry_mass - mean(Berry_mass, na.rm = TRUE))/ sd(Berry_mass, na.rm = TRUE))
+subset_2c_berry2007 <- subset_2c_yld_comp2007 %>% 
+  mutate(z_score= (Berry_mass - mean(Berry_mass, na.rm = TRUE))/ sd(Berry_mass, na.rm = TRUE))
+subset_2c_berry2008 <- subset_2c_yld_comp2008 %>% 
+  mutate(z_score= (Berry_mass - mean(Berry_mass, na.rm = TRUE))/ sd(Berry_mass, na.rm = TRUE))
+
+#4c now berry mass
+subset_4c_berry2005 <- subset_4c_yld_comp2005 %>% 
+  mutate(z_score= (Berry_mass - mean(Berry_mass, na.rm = TRUE))/ sd(Berry_mass, na.rm = TRUE))
+subset_4c_berry2006 <- subset_4c_yld_comp2006 %>% 
+  mutate(z_score= (Berry_mass - mean(Berry_mass, na.rm = TRUE))/ sd(Berry_mass, na.rm = TRUE))
+subset_4c_berry2007 <- subset_4c_yld_comp2007 %>% 
+  mutate(z_score= (Berry_mass - mean(Berry_mass, na.rm = TRUE))/ sd(Berry_mass, na.rm = TRUE))
+subset_4c_berry2008 <- subset_4c_yld_comp2008 %>% 
+  mutate(z_score= (Berry_mass - mean(Berry_mass, na.rm = TRUE))/ sd(Berry_mass, na.rm = TRUE))
+#combined data
+
+
+
+berry_mass_z_score <- dplyr::bind_rows(subset_2c_berry2005, 
+                                       subset_2c_berry2006, 
+                                       subset_2c_berry2007, 
+                                       subset_2c_berry2008,
+                                       subset_4c_berry2005, 
+                                       subset_4c_berry2006, 
+                                       subset_4c_berry2007, 
+                                       subset_4c_berry2008)
+
+berry_mass_z_score$year_as_factor<-factor(berry_mass_z_score$year, 
+                                   c("2005","2006","2007", "2008"))
+
+levels(berry_mass_z_score$Cropload)[levels(berry_mass_z_score$Cropload)=="2c"] <- "2 cane pruned"
+levels(berry_mass_z_score$Cropload)[levels(berry_mass_z_score$Cropload)=="4c"] <- "4 cane pruned"
+
+```
+
+##graph 8 berry weights
+
+
+```{r berry wts graph, echo=FALSE, message=FALSE, warning=FALSE}
+
+berry_mass_z_score <- mutate(berry_mass_z_score,
+                     class = paste0(Cropload ," ", year_as_factor ))
+
+ggplot(berry_mass_z_score, aes(cropcircle, z_score, shape = class)) +
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+  )+
+  scale_y_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = "none")+
+  #theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  #theme(legend.title = element_blank())+
+  labs(x = "",
+       y = "Berry weight normalised") 
+ggsave(filename = "Berry weight normalised.png", device = "png" ,dpi=600)
+
+```
+
+
+
+##Fig 8  bunches_per_vine bpv
+
+```{r bunches_per_vine data norm, echo=FALSE, message=FALSE, warning=FALSE}
+#glimpse(subset_2c_yld_comp2005)
+#can I make new variable for each subset of data
+#2c first bunches_per_vine bpv
+subset_2c_bpv2005 <- subset_2c_yld_comp2005 %>% 
+  mutate(z_score= (bunches_per_vine - mean(bunches_per_vine, na.rm = TRUE))/ sd(bunches_per_vine, na.rm = TRUE))
+subset_2c_bpv2006 <- subset_2c_yld_comp2006 %>% 
+  mutate(z_score= (bunches_per_vine - mean(bunches_per_vine, na.rm = TRUE))/ sd(bunches_per_vine, na.rm = TRUE))
+subset_2c_bpv2007 <- subset_2c_yld_comp2007 %>% 
+  mutate(z_score= (bunches_per_vine - mean(bunches_per_vine, na.rm = TRUE))/ sd(bunches_per_vine, na.rm = TRUE))
+subset_2c_bpv2008 <- subset_2c_yld_comp2008 %>% 
+  mutate(z_score= (bunches_per_vine - mean(bunches_per_vine, na.rm = TRUE))/ sd(bunches_per_vine, na.rm = TRUE))
+
+subset_4c_bpv2005 <- subset_4c_yld_comp2005 %>% 
+  mutate(z_score= (bunches_per_vine - mean(bunches_per_vine, na.rm = TRUE))/ sd(bunches_per_vine, na.rm = TRUE))
+subset_4c_bpv2006 <- subset_4c_yld_comp2006 %>% 
+  mutate(z_score= (bunches_per_vine - mean(bunches_per_vine, na.rm = TRUE))/ sd(bunches_per_vine, na.rm = TRUE))
+subset_4c_bpv2007 <- subset_4c_yld_comp2007 %>% 
+  mutate(z_score= (bunches_per_vine - mean(bunches_per_vine, na.rm = TRUE))/ sd(bunches_per_vine, na.rm = TRUE))
+subset_4c_bpv2008 <- subset_4c_yld_comp2008 %>% 
+  mutate(z_score= (bunches_per_vine - mean(bunches_per_vine, na.rm = TRUE))/ sd(bunches_per_vine, na.rm = TRUE))
+#combined data
+
+
+
+bpv_z_score <- dplyr::bind_rows(subset_2c_bpv2005, 
+                                       subset_2c_bpv2006, 
+                                       subset_2c_bpv2007, 
+                                       subset_2c_bpv2008,
+                                       subset_4c_bpv2005, 
+                                       subset_4c_bpv2006, 
+                                       subset_4c_bpv2007, 
+                                       subset_4c_bpv2008)
+
+bpv_z_score$year_as_factor<-factor(bpv_z_score$year, 
+                                          c("2005","2006","2007", "2008"))
+
+levels(bpv_z_score$Cropload)[levels(bpv_z_score$Cropload)=="2c"] <- "2 cane pruned"
+levels(bpv_z_score$Cropload)[levels(bpv_z_score$Cropload)=="4c"] <- "4 cane pruned"
+
+#glimpse(bpv_z_score)
+
+```
+
+```{r bunches_per_vine plot, echo=FALSE, message=FALSE, warning=FALSE}
+####PLOT8 bunches_per_vine#####
+bpv_z_score <- mutate(bpv_z_score,
+                             class = paste0(Cropload ," ", year_as_factor ))
+
+ggplot(bpv_z_score, aes(cropcircle, z_score, shape = class)) +
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+    )+
+  scale_y_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = "none")+
+  #theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  #theme(legend.title = element_blank())+
+  labs(x = "Crop Circle PCD",
+       y = "Bunches per vine normalised") 
+ggsave(filename = "Bunches per vine normalised.png", device = "png" ,dpi=600)
+
+```
+
+##Fig 8  Bunch_mass
+
+```{r bunch mass norm data, echo=FALSE, message=FALSE, warning=FALSE}
+
+#glimpse(subset_2c_yld_comp2005)
+#can I make new variable for each subset of data
+#2c first bunches_per_vine bpv
+subset_2c_bunch_mass2005 <- subset_2c_yld_comp2005 %>% 
+  mutate(z_score= (Bunch_mass - mean(Bunch_mass, na.rm = TRUE))/ sd(Bunch_mass, na.rm = TRUE))
+subset_2c_bunch_mass2006 <- subset_2c_yld_comp2006 %>% 
+  mutate(z_score= (Bunch_mass - mean(Bunch_mass, na.rm = TRUE))/ sd(Bunch_mass, na.rm = TRUE))
+subset_2c_bunch_mass2007 <- subset_2c_yld_comp2007 %>% 
+  mutate(z_score= (Bunch_mass - mean(Bunch_mass, na.rm = TRUE))/ sd(Bunch_mass, na.rm = TRUE))
+subset_2c_bunch_mass2008 <- subset_2c_yld_comp2008 %>% 
+  mutate(z_score= (Bunch_mass - mean(Bunch_mass, na.rm = TRUE))/ sd(Bunch_mass, na.rm = TRUE))
+
+subset_4c_bunch_mass2005 <- subset_4c_yld_comp2005 %>% 
+  mutate(z_score= (Bunch_mass - mean(Bunch_mass, na.rm = TRUE))/ sd(Bunch_mass, na.rm = TRUE))
+subset_4c_bunch_mass2006 <- subset_4c_yld_comp2006 %>% 
+  mutate(z_score= (Bunch_mass - mean(Bunch_mass, na.rm = TRUE))/ sd(Bunch_mass, na.rm = TRUE))
+subset_4c_bunch_mass2007 <- subset_4c_yld_comp2007 %>% 
+  mutate(z_score= (Bunch_mass - mean(Bunch_mass, na.rm = TRUE))/ sd(Bunch_mass, na.rm = TRUE))
+subset_4c_bunch_mass2008 <- subset_4c_yld_comp2008 %>% 
+  mutate(z_score= (Bunch_mass - mean(Bunch_mass, na.rm = TRUE))/ sd(Bunch_mass, na.rm = TRUE))
+#combined data
+bunch_mass_z_score <- dplyr::bind_rows(subset_2c_bunch_mass2005, 
+                                subset_2c_bunch_mass2006, 
+                                subset_2c_bunch_mass2007, 
+                                subset_2c_bunch_mass2008,
+                                subset_4c_bunch_mass2005, 
+                                subset_4c_bunch_mass2006, 
+                                subset_4c_bunch_mass2007, 
+                                subset_4c_bunch_mass2008)
+
+bunch_mass_z_score$year_as_factor<-factor(bunch_mass_z_score$year, 
+                                   c("2005","2006","2007", "2008"))
+
+levels(bunch_mass_z_score$Cropload)[levels(bunch_mass_z_score$Cropload)=="2c"] <- "2 cane pruned"
+levels(bunch_mass_z_score$Cropload)[levels(bunch_mass_z_score$Cropload)=="4c"] <- "4 cane pruned"
+```
+
+
+##fig 8 bunch_mass
+
+```{r bunch mass plot, echo=FALSE, message=FALSE, warning=FALSE}
+
+bunch_mass_z_score <- mutate(bunch_mass_z_score,
+                      class = paste0(Cropload ," ", year_as_factor ))
+
+ggplot(bunch_mass_z_score, aes(cropcircle, z_score, shape = class)) +
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+  )+
+  scale_y_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = "none")+
+  #theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  #theme(legend.title = element_blank())+
+  labs(x = "",
+       y = "Bunch mass normalised") 
+ggsave(filename = "Bunch mass normalised.png", device = "png" ,dpi=600)
+
+```
+
+
+
+##Fig 8  berry number per bunch
+
+```{r berry no per bunch norm, echo=FALSE, message=FALSE, warning=FALSE}
+#glimpse(subset_2c_yld_comp2005)
+#can I make new variable for each subset of data
+#2c first bunches_per_vine bpv
+subset_2c_berry_no_per_bunch2005 <- subset_2c_yld_comp2005 %>% 
+  mutate(z_score= (Berr_no_per_bunch - mean(Berr_no_per_bunch, na.rm = TRUE))/ sd(Berr_no_per_bunch, na.rm = TRUE))
+subset_2c_berry_no_per_bunch2006 <- subset_2c_yld_comp2006 %>% 
+  mutate(z_score= (Berr_no_per_bunch - mean(Berr_no_per_bunch, na.rm = TRUE))/ sd(Berr_no_per_bunch, na.rm = TRUE))
+subset_2c_berry_no_per_bunch2007 <- subset_2c_yld_comp2007 %>% 
+  mutate(z_score= (Berr_no_per_bunch - mean(Berr_no_per_bunch, na.rm = TRUE))/ sd(Berr_no_per_bunch, na.rm = TRUE))
+subset_2c_berry_no_per_bunch2008 <- subset_2c_yld_comp2008 %>% 
+  mutate(z_score= (Berr_no_per_bunch - mean(Berr_no_per_bunch, na.rm = TRUE))/ sd(Berr_no_per_bunch, na.rm = TRUE))
+
+subset_4c_berry_no_per_bunch2005 <- subset_4c_yld_comp2005 %>% 
+  mutate(z_score= (Berr_no_per_bunch - mean(Berr_no_per_bunch, na.rm = TRUE))/ sd(Berr_no_per_bunch, na.rm = TRUE))
+subset_4c_berry_no_per_bunch2006 <- subset_4c_yld_comp2006 %>% 
+  mutate(z_score= (Berr_no_per_bunch - mean(Berr_no_per_bunch, na.rm = TRUE))/ sd(Berr_no_per_bunch, na.rm = TRUE))
+subset_4c_berry_no_per_bunch2007 <- subset_4c_yld_comp2007 %>% 
+  mutate(z_score= (Berr_no_per_bunch - mean(Berr_no_per_bunch, na.rm = TRUE))/ sd(Berr_no_per_bunch, na.rm = TRUE))
+subset_4c_berry_no_per_bunch2008 <- subset_4c_yld_comp2008 %>% 
+  mutate(z_score= (Berr_no_per_bunch - mean(Berr_no_per_bunch, na.rm = TRUE))/ sd(Berr_no_per_bunch, na.rm = TRUE))
+#combined data
+
+berry_no_per_bunch_z_score <- dplyr::bind_rows(subset_2c_berry_no_per_bunch2005, 
+                                       subset_2c_berry_no_per_bunch2006, 
+                                       subset_2c_berry_no_per_bunch2007, 
+                                       subset_2c_berry_no_per_bunch2008,
+                                       subset_4c_berry_no_per_bunch2005, 
+                                       subset_4c_berry_no_per_bunch2006, 
+                                       subset_4c_berry_no_per_bunch2007, 
+                                       subset_4c_berry_no_per_bunch2008)
+
+berry_no_per_bunch_z_score$year_as_factor<-factor(berry_no_per_bunch_z_score$year, 
+                                          c("2005","2006","2007", "2008"))
+
+levels(berry_no_per_bunch_z_score$Cropload)[levels(berry_no_per_bunch_z_score$Cropload)=="2c"] <- "2 cane pruned"
+levels(berry_no_per_bunch_z_score$Cropload)[levels(berry_no_per_bunch_z_score$Cropload)=="4c"] <- "4 cane pruned"
+```
+
+```{r berry no per bunch plot, echo=FALSE, message=FALSE, warning=FALSE}
+####PLOT8 berry_no_per_bunch#####
+
+berry_no_per_bunch_z_score <- mutate(berry_no_per_bunch_z_score,
+                             class = paste0(Cropload ," ", year_as_factor ))
+
+ggplot(berry_no_per_bunch_z_score, aes(cropcircle, z_score, shape = class)) +
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+  )+
+  scale_y_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = "none")+
+  #theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  #theme(legend.title = element_blank())+
+  labs(x = "Crop Circle PCD",
+       y = "Normalised berry number per bunch") 
+
+ggsave(filename = "Normalised berry number per bunch.png", device = "png" ,dpi=600)
+
+```
+
+##Fig at the end of the report now labelled as Fig 7
+This is data from Sue.
+
+Dormant canopy 2005_Percantage of shoots at 11-15mm diameter per vine (%)
+
+Dormant canopy 2005_Percantage of shoots at 16mm+ diameter per vine (%)
+
+I have used recal >11mm from sue data sheet clm ((n+0)/p)*100
+
+```{r prop of shoots data, echo=FALSE, message=FALSE, warning=FALSE}
+
+##fig end end again
+dormant_canopy_raw <- read.csv("dormant_canopy.csv", header=TRUE)
+#glimpse(dormant_canopy_raw)
+dormant_canopy_raw <- select(dormant_canopy_raw, "ID", 
+                         "vine_size" = "vine_size_2005",
+                         "Cropload",
+                         "year",
+                         "cropcircle",
+                         "diam11_15" = "dorm_canopy_numb_shoots_diam11_15_per_vine",
+                         "diam16plus" = "dorm_canopy_numb_shoots_diam16plus_per_vine",
+                         "total_numb_eff" = "dorm_canopy_total_numb_effective_shoots_per_vine")
+dormant_canopy_raw <- mutate(dormant_canopy_raw, 
+                             cal = ((diam11_15 + diam16plus)/total_numb_eff)*100)
+
+write.csv(dormant_canopy_raw, "dormant_canopy_cal.csv")
+```
+
+#2006 Proportion of shoots > 11mm
+
+```{r prop of shoots plot 2006, echo=FALSE, message=FALSE, warning=FALSE}
+##By year
+dormant_canopy_raw_2006 <- subset(dormant_canopy_raw, year == 2006)
+#glimpse(dormant_canopy_raw_2006)
+dormant_canopy_raw_2007 <- subset(dormant_canopy_raw, year == 2007)
+
+dormant_canopy_raw_2006$year_as_factor<-factor(dormant_canopy_raw_2006$year, 
+                                      c("2005","2006","2007", "2008"))
+
+levels(dormant_canopy_raw_2006$Cropload)[levels(dormant_canopy_raw_2006$Cropload)=="2c"] <- "2 cane pruned"
+levels(dormant_canopy_raw_2006$Cropload)[levels(dormant_canopy_raw_2006$Cropload)=="4c"] <- "4 cane pruned"
+
+dormant_canopy_raw_2007$year_as_factor<-factor(dormant_canopy_raw_2007$year, 
+                                               c("2005","2006","2007", "2008"))
+
+levels(dormant_canopy_raw_2007$Cropload)[levels(dormant_canopy_raw_2007$Cropload)=="2c"] <- "2 cane pruned"
+levels(dormant_canopy_raw_2007$Cropload)[levels(dormant_canopy_raw_2007$Cropload)=="4c"] <- "4 cane pruned"
+
+##2006###GRAPH
+lm_eq_pro_shoots <- lm(cropcircle ~ cal, dormant_canopy_raw_2006)
+anova(lm_eq_shoot_mass_4cane)
+summary(lm(cropcircle ~ cal, dormant_canopy_raw_2006))$r.squared 
+summary(lm(cropcircle ~ cal, dormant_canopy_raw_2006))$coefficients 
+
+dormant_canopy_raw_2006 <- mutate(dormant_canopy_raw_2006,
+                             class = paste0(Cropload ," ", year_as_factor ))
+
+ggplot(dormant_canopy_raw_2006, aes(cropcircle, cal, shape = class, group = Cropload)) +
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  geom_smooth(aes(linetype=Cropload), method=lm, na.rm = TRUE, se=FALSE, colour = "black")+
+  #geom_smooth(method=lm, na.rm = TRUE, se=FALSE, colour="black")+
+  #annotate("text", x = 8.5, y = 65, label = "y = 8.78 + 0.04x", size=4)+
+  #annotate("text", x = 8.5, y = 60, label = "R2 = 0.22, P<0.0001", size=4)+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+    )+
+  scale_y_continuous(breaks= c(0, 20, 40, 60,80), limits = c(0,70),
+  sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = "none")+
+  #theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  #theme(legend.title = element_blank())+
+  labs(x = "Crop Circle PCD",
+       y = "Proportion of shoots > 11mm")
+
+ggsave(filename = "Proportion of shoots  11mm_2006.png", device = "png" ,dpi=600)
+write.csv(dormant_canopy_raw_2006, file = "dormant_canopy_raw_2006.csv")
+
+```
+
+
+#From JMP 2006  Proportion of shoots > 11mm
+
+
+###Proportion of shoots > 11mm = -25.15834 + 5.8305071*cropcircle
+
+###RSquare	0.216043
+RSquare Adj	0.199001
+
+Root Mean Square Error	9.985861
+
+Mean of Response	33.23089
+
+Observations (or Sum Wgts)	48
+
+
+Source	DF	Sum of Squares	Mean Square	F Ratio
+
+Model	1	1264.0876	1264.09	12.6767
+
+Error	46	4587.0012	99.72		Prob > F
+
+C. Total	47	5851.0888		0.0009	
+
+
+Term	Estimate	Std Error	t Ratio	Prob>|t|
+
+Intercept	 -25.15834	16.46268	 -1.53	0.1333
+
+cropcircle	5.8305071	1.637583	3.56	0.0009
+
+
+
+
+
+
+#2007 Proportion of shoots > 11mm
+
+```{r prop of shoots plot 2007, echo=FALSE, message=FALSE, warning=FALSE}
+##2007
+dormant_canopy_raw_2007 <- mutate(dormant_canopy_raw_2007,
+                             class = paste0(Cropload ," ", year_as_factor ))
+
+lm_eq_dormant_canopy_raw_2007 <- lm(cropcircle ~ cal, dormant_canopy_raw_2007)
+anova(lm_eq_shoot_mass_4cane)
+summary(lm(cropcircle ~ cal, dormant_canopy_raw_2007))$r.squared 
+summary(lm(cropcircle ~ cal, dormant_canopy_raw_2007))$coefficients 
+
+
+ggplot(dormant_canopy_raw_2007, aes(cropcircle, cal, shape = class)) +
+  geom_point()+
+  geom_point(aes(shape = class), size = 3, fill= 'white')+
+  scale_shape_manual(values = c("2 cane pruned 2005" = 21,
+                                "2 cane pruned 2006" =24,
+                                "2 cane pruned 2007"= 22,
+                                "2 cane pruned 2008" = 23,
+                                "4 cane pruned 2005" = 16,
+                                "4 cane pruned 2006" = 17,
+                                "4 cane pruned 2007" = 15,
+                                "4 cane pruned 2008" = 18))+
+  geom_smooth(aes(linetype=Cropload), method=lm, na.rm = TRUE, se=FALSE, colour = "black")+
+  #geom_smooth(method=lm, na.rm = TRUE, se=FALSE, colour="black")+
+  #annotate("text", x = 8.5, y = 65, label = "y = 9.42 + 0.02x", size=4)+
+  #annotate("text", x = 8.5, y = 60, label = "R2 = 0.09, P<0.0001", size=4)+
+  theme_classic()+
+  theme(
+    axis.ticks.length = unit(-0.15, "cm"),
+    axis.text.y = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.text.x = element_text(size = 10, margin = unit(c(t = 4.0, r = 4.0, b = 4.0, l = 4.0), "mm")),
+    axis.title = element_text(size = 12, face = "bold"),
+    panel.border = element_rect(colour = "black", fill=NA, size=0.5)
+    )+
+  scale_y_continuous(breaks= c(0, 20, 40, 60,80), limits = c(0,70),
+  sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  scale_x_continuous(sec.axis = sec_axis(~.+0, name = "",labels = NULL))+
+  theme(legend.position = "none")+
+  #theme(legend.background = element_rect(colour = 'black', linetype='solid'))+
+  #theme(legend.title = element_blank())+
+  labs(x = "Crop Circle PCD",
+       y = "Proportion of shoots > 11mm")
+
+ggsave(filename = "Proportion of shoots 11mm_2007.png", device = "png" ,dpi=600)
+
+write.csv(dormant_canopy_raw_2007, file = "dormant_canopy_raw_2007.csv")
+
+```
+
+
+##From JMP 2007 Proportion of shoots > 11mm
+###Proportion of shoots > 11mm cal = -15.33539 + 4.6270388*cropcircle
+
+
+	
+###RSquare	0.088638
+
+RSquare Adj	0.068826
+
+Root Mean Square Error	13.33958
+
+Mean of Response	31.00179
+
+Observations (or Sum Wgts)	48
+
+
+
+Source	DF	Sum of Squares	Mean Square	F Ratio
+
+Model	1	796.1058	796.106	4.4739
+
+Error	46	8185.4376	177.944		Prob > F
+
+C. Total	47	8981.5435		0.0399
+
+
+Term	Estimate	Std Error	t Ratio	Prob>|t|
+
+Intercept	 -15.33539	21.99161	 -0.70	0.4891
+
+cropcircle	4.6270388	2.187559	2.12	0.0399
+
+
+
+
+
+
+
+
